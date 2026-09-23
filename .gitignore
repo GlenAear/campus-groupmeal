@@ -1,0 +1,41 @@
+# ===== 编译产物 =====
+target/
+out/
+build/
+*.class
+*.jar
+*.war
+*.ear
+
+# ===== IDE =====
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# ===== 日志与临时 =====
+*.log
+logs/
+tmp/
+*.tmp
+*.bak
+
+# ===== 系统 =====
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ===== 本地备份（约定：不进仓库）=====
+backup_*/
+
+# ===== 敏感信息（将来 SpringBoot 用）=====
+application-local.yml
+application-local.properties
+*.env
+
+
+.qoder-credits/

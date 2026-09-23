@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- ⚠️ namespace 必须是 Dao 接口的完整类名（纪要原话：以实现接口方法的绑定与实现） -->
+<mapper namespace="com.groupmeal.dao.EmpDao">
+
+    <select id="getCount" resultType="int">
+        select count(*) from emp
+    </select>
+
+    <!-- resultType="Emp" 能这么写，是因为 Step 4 配了 typeAliases 包扫描 -->
+    <select id="queryAll" resultType="Emp">
+        select empno, ename, salary, deptno, hiredate from emp
+    </select>
+
+    <select id="queryByEmpno" parameterType="int" resultType="Emp">
+        select empno, ename, salary, deptno, hiredate
+        from emp where empno = #{empno}
+    </select>
+
+    <!-- useGeneratedKeys/keyProperty：插入后把自增主键回填到 emp.empno（PDF 没写，项目里必用） -->
+    <insert id="saveEmp" parameterType="Emp" useGeneratedKeys="true" keyProperty="empno">
+        insert into emp(ename, salary, deptno, hiredate)
+        values(#{ename}, #{salary}, #{deptno}, #{hiredate})
+    </insert>
+
+    <update id="updateEmp" parameterType="Emp">
+        update emp
+        set ename = #{ename}, salary = #{salary}, deptno = #{deptno}, hiredate = #{hiredate}
+        where empno = #{empno}
+    </update>
+
+    <delete id="deleteByEmpno" parameterType="int">
+        delete from emp where empno = #{empno}
+    </delete>
+
+</mapper>

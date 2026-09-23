@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <!-- ① 全局设置：打开 SQL 日志（PDF p5「日志配置」）＋ 下划线转驼峰 -->
+    <settings>
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+    </settings>
+
+    <!-- ② 类型别名：扫整个包，之后映射文件里可直接写 Emp 而不必写全类名（纪要「配置别名简化」） -->
+    <typeAliases>
+        <package name="com.groupmeal.entity"/>
+    </typeAliases>
+
+    <!-- ③ 环境：数据库四要素（驱动、URL、用户名、密码）＝所有 JDBC 封装框架的通用要求（纪要原话） -->
+    <environments default="devA">
+        <environment id="devA">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver"   value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url"      value="jdbc:mysql://127.0.0.1:3306/mydb?useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8&amp;allowPublicKeyRetrieval=true"/>
+                <property name="username" value="root"/>
+                <property name="password" value="123456"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!-- ④ 注册映射文件（纪要：新增 mapper 必须在这里注册，否则容器不认识它） -->
+    <mappers>
+        <mapper resource="mapper/EmpMapper.xml"/>
+    </mappers>
+
+</configuration>
