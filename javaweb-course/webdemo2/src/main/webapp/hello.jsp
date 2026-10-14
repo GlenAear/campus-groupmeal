@@ -24,7 +24,7 @@
 
 <%-- 3. 内置对象 application（报告2 会正式讲） --%>
 JSP 容器信息：<%= application.getServerInfo() %><br/>
-Servlet 规范版本：<%= application.getMajorVersion() %>.<%= application.getMinorVersion() %><br/>
+Servlet 规范版本：<%= application.getEffectiveMajorVersion() %>.<%= application.getEffectiveMinorVersion() %><br/>
 项目真实路径：<%= application.getRealPath("/") %><br/>
 </body>
 </html>
