@@ -4,6 +4,11 @@
         "https://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
 
+    <!-- ⓪ 外部属性文件：数据库四要素写在 jdbc.properties 里，那份文件已进 .gitignore，绝不提交。
+         DTD 规定 <properties> 必须放在 <settings> 之前，位置写错会直接报构建异常。
+         真实项目里这也叫"配置外置"——Spring Boot 的 application.yml / @ConfigurationProperties 是同一件事。 -->
+    <properties resource="jdbc.properties"/>
+
     <!-- ① 全局设置：打开 SQL 日志（PDF p5「日志配置」）＋ 下划线转驼峰 -->
     <settings>
         <setting name="logImpl" value="STDOUT_LOGGING"/>
@@ -20,10 +25,11 @@
         <environment id="devA">
             <transactionManager type="JDBC"/>
             <dataSource type="POOLED">
-                <property name="driver"   value="com.mysql.cj.jdbc.Driver"/>
-                <property name="url"      value="jdbc:mysql://127.0.0.1:3306/mydb?useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8&amp;allowPublicKeyRetrieval=true"/>
-                <property name="username" value="root"/>
-                <property name="password" value="123456"/>
+                <!-- 四个值全部来自 jdbc.properties：源码/配置里不出现任何真实账号密码 -->
+                <property name="driver"   value="${driver}"/>
+                <property name="url"      value="${url}"/>
+                <property name="username" value="${user}"/>
+                <property name="password" value="${password}"/>
             </dataSource>
         </environment>
     </environments>

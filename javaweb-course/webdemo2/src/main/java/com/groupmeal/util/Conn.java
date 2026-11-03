@@ -19,7 +19,8 @@ import java.util.Properties;
  * 第 11 项：两种拿连接的方式
  *   getConn()      连接参数写死在代码里（老师进度表上写的是"直连 access 数据库"，
  *                  原理一样：驱动＋jdbc:URL＋账号密码。access 那套靠 JDK 自带的 JDBC-ODBC 桥，
- *                  而 **JDK 9 起桥就被移除了**，本机是 JDK 17，所以这里换成 MySQL 版，讲解时说明这一点即可）
+ *                  而 **JDK 9 起桥就被移除了**，本机是 JDK 17，所以这里换成 MySQL 版，讲解时说明这一点即可。
+ *                  ⚠️ 账号密码不写在这里（见方法上的注释），本仓库是公开仓库，口令一律走 jdbc.properties）
  *   getConnection()连接参数放 jdbc.properties —— 这就是 MyBatis 的 mybatis-config.xml 里
  *                  <environments>／jdbc.properties 干同一件事，也是"配置外置"的第一步
  * 第 12 项：三个公共方法
@@ -31,25 +32,35 @@ import java.util.Properties;
  */
 public class Conn {
 
-    /** 第 11 项·写法一：参数直连 */
+    /** 第 11 项·写法一：参数直连（演示的形态＝URL 与驱动写在调用处，不经过属性文件对象）。
+     *  ⚠️ 但**真实账号密码绝不落在源码里**：本仓库是公开仓库，所以 user/password 从 jdbc.properties
+     *  取（该文件已进 .gitignore）。面试就讲这句："写死参数是教学形态，写死口令是事故。" */
     public static Connection getConn() throws Exception {
         Class.forName("com.mysql.cj.jdbc.Driver");
+        Properties p = loadProps();
         return DriverManager.getConnection(
                 "jdbc:mysql://localhost:3306/javaweb?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai",
-                "root", "123456");
+                p.getProperty("user"), p.getProperty("password"));
     }
 
-    /** 第 11 项·写法二：属性文件存连接参数 */
+    /** 第 11 项·写法二：属性文件存连接参数（四个值全从 jdbc.properties 读） */
     public static Connection getConnection() throws Exception {
+        Properties p = loadProps();
+        Class.forName(p.getProperty("driver"));
+        return DriverManager.getConnection(p.getProperty("url"), p.getProperty("user"), p.getProperty("password"));
+    }
+
+    /** 两个写法共用的读文件动作：从 WEB-INF/classes 根目录读 jdbc.properties */
+    private static Properties loadProps() throws Exception {
         Properties p = new Properties();
         InputStream in = Conn.class.getClassLoader().getResourceAsStream("jdbc.properties");
         if (in == null) {
-            throw new SQLException("找不到 jdbc.properties：它应该在 WEB-INF/classes 根目录下");
+            throw new SQLException("找不到 jdbc.properties：它应该在 WEB-INF/classes 根目录下"
+                    + "（把 src/main/resources/jdbc.properties.example 复制成 jdbc.properties 再改值）");
         }
         p.load(new InputStreamReader(in, "UTF-8"));
         in.close();
-        Class.forName(p.getProperty("driver"));
-        return DriverManager.getConnection(p.getProperty("url"), p.getProperty("user"), p.getProperty("password"));
+        return p;
     }
 
     /** 第 12 项①：查询记录是否存在。sql 里用 ? 占位，args 按顺序填 */

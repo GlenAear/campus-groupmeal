@@ -1,0 +1,7 @@
+# 用法：把本文件**复制**成同目录下的 jdbc.properties（那份真密码已被 .gitignore 排除，不进仓库）
+# 机房/别人的机器多半不是 root/123456，只改 user、password 两行即可
+# mybatis-config.xml 通过 <properties resource="jdbc.properties"/> 读这四个键
+driver=com.mysql.cj.jdbc.Driver
+url=jdbc:mysql://127.0.0.1:3306/mydb?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8&allowPublicKeyRetrieval=true
+user=你的MySQL账号
+password=你的MySQL密码
