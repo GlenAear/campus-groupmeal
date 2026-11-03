@@ -1,4 +1,4 @@
-# ===== 编译产物 =====
+﻿# ===== 编译产物 =====
 target/
 out/
 build/
@@ -39,3 +39,6 @@ application-local.properties
 
 
 .qoder-credits/
+
+# ===== 数据库连接属性（含密码，绝不进仓库）=====
+**/jdbc.properties

@@ -1,0 +1,6 @@
+# 把本文件复制成同目录下的 jdbc.properties（真密码那份已写进 .gitignore，不进仓库）
+# 机房机器的 MySQL 账号多半不一样，只改 user / password 两行
+driver=com.mysql.cj.jdbc.Driver
+url=jdbc:mysql://localhost:3306/javaweb?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+user=你的MySQL账号
+password=你的MySQL密码

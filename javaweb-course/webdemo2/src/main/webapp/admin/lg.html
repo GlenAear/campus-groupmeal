@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head><meta charset="UTF-8"><title>管理员登录（第16项）</title></head>
+<body>
+<h1>管理员登录</h1>
+<form action="login" method="post">
+    <p>用户名：<input name="username" value="admin"/></p>
+    <p>密　码：<input name="passwd" value="123"/></p>
+    <p><input type="submit" value="登录"/>　<a href="regist.html">添加用户</a></p>
+</form>
+<p>只有用户名＝admin 且密码在 users 表里匹配才算管理员（普通账号 zhangsan 会被退回）。</p>
+</body>
+</html>

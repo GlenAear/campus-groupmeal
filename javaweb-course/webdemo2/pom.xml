@@ -30,7 +30,14 @@
             <version>3.1.1</version>
             <scope>provided</scope>
         </dependency>
+                <!-- 第 11 项起要连数据库：驱动必须打进 WEB-INF/lib（compile 作用域），写成 provided 就进不了 war -->
         <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.0.33</version>
+        </dependency>
+
+<dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>${junit.version}</version>
