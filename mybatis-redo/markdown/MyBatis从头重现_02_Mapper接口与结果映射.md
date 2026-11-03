@@ -97,20 +97,29 @@ class StringApiTest {
     }
 
     @Test
+    @Test
     void 字符串方式故意写错一次() {
-        // 把 queryAll 写成 queryall —— 编译器不报错，运行时炸
-        List<Emp> list = session.selectList("com.groupmeal.dao.EmpDao.queryall");
-        System.out.println(list);
+        // 把 queryAll 写成 queryall —— 编译器不报错，运行时才炸。
+        // 2026-11-04 改成 assertThrows：异常照样发生、照样打印，但被断言接住，mvn test 是绿的。
+        Exception e = Assertions.assertThrows(Exception.class,
+                () -> session.selectList("com.groupmeal.dao.EmpDao.queryall"));
+        System.out.println("故意写错看到的异常 = " + e.getClass().getSimpleName() + " : " + e.getMessage());
+        Assertions.assertTrue(e.getMessage().contains("queryall"), "异常信息里应该带上那个写错的 id");
     }
 }
 ```
 
-**验收**：第一个方法打印数据；**第二个方法抛异常**，控制台红字：
+**验收**：第一个方法打印数据；**第二个方法仍然抛异常，但被 `assertThrows` 接住**，控制台打印出来的红字原文（2026-11-04 实测）：
 
 ```
-org.apache.ibatis.binding.BindingException:
-Invalid bound statement (not found): com.groupmeal.dao.EmpDao.queryall
+故意写错看到的异常 = PersistenceException :
+### Error querying database.  Cause: java.lang.IllegalArgumentException:
+### Mapped Statements collection does not contain value for com.groupmeal.dao.EmpDao.queryall
 ```
+
+> 「标注」⚠️ **这里要更正我原稿写错的一处**（本附录 §8 急救表也照这条改）：**字符串方式**写错 id，报的是 `IllegalArgumentException: Mapped Statements collection does not contain value for …`（外面包一层 `PersistenceException`）；而 **`BindingException: Invalid bound statement (not found)`** 是**接口里有方法、XML 里没有对应 id**、走代理调用时才报的那一个。两种都是"没找到语句"，但**报错原文不同、成因不同**，被追问时别说混：
+> · 字符串方式 → 直接查 `MappedStatement` 这张 Map，查不到就 `IllegalArgumentException`；
+> · 代理方式 → `MapperProxy` 找不到方法绑定的语句 → `BindingException: Invalid bound statement (not found)`。
 
 ### 1.2 换成代理方式（01 册的写法）
 
@@ -136,7 +145,7 @@ List<Emp> list = dao.queryAll();     // 写错方法名 → IDEA 直接飘红，
 
 PDF 原文三条，逐条动手验，验完才记得住：
 
-1. **`namespace` 必须是接口的完整限定名** → 01 册已定：`com.groupmeal.dao.EmpDao`。写错就是 Step 1 那个 `Invalid bound statement`。
+1. **`namespace` 必须是接口的完整限定名** → 01 册已定：`com.groupmeal.dao.EmpDao`。写错就是 Step 1 那个"没找到语句"：**字符串方式**报 `Mapped Statements collection does not contain value for …`，**代理方式**报 `Invalid bound statement (not found)` —— 同一个原因，两张皮（详见 §1.1 末尾的更正标注）。
 2. **SQL 标记元素的 `id` 必须和接口中要实现的方法名一致** → 绑定靠的是"namespace + id"两个字符串拼起来等于"接口全类名 + 方法名"。
 3. **⚠️ 标记元素的 id 不需要和接口全部一致**：
    - 接口里可以有方法，**XML 里不写对应 SQL**（此时调用它才炸，不调用完全没事）；
@@ -516,7 +525,8 @@ XML 里 `#{deptno}` 会去 Map 里取 key="deptno" 的值。适合"参数个数�
 
 | 现象 | 真正原因 | 怎么办 |
 |---|---|---|
-| `Invalid bound statement (not found)` | namespace 写错 / id 和方法名不一致 / XML 没被加载 | 三查：①namespace 是否等于接口全类名 ②id ③`mybatis-config.xml` 里 `<mapper resource="mapper/EmpMapper.xml"/>` 有没有这一行 |
+| `BindingException: Invalid bound statement (not found)`（**代理方式**：接口有方法、XML 没这条 id） | namespace 写错 / id 和方法名不一致 / XML 没被加载 | 三查：①namespace 是否等于接口全类名 ②id ③`mybatis-config.xml` 里 `<mapper resource="mapper/EmpMapper.xml"/>` 有没有这一行 |
+| `PersistenceException` 内层 `IllegalArgumentException: Mapped Statements collection does not contain value for xxx`（**字符串方式**：`session.selectList("...id")` 写错） | 那个字符串在注册表里根本没有 —— 和上一条是同一个原因的另一种皮 | 逐字对 `namespace.id` ＝ 接口全类名＋方法名；大小写也算（`queryall` ≠ `queryAll`，实测就是这个坑） |
 | 接口有方法、XML 没 SQL，调用就炸 | 同上（少注册了 id） | 补 `<select id="方法名">`，或把方法删掉 |
 | resultMap 生效不了、属性还是 null | 用了 `resultType` 又写 resultMap / 两者同时写 | 只能留一个；引用名要和 `id` 完全一致 |
 | `<setting name="autoMappingBehavior" value="NONE"/>` 之后**全项目**查不出东西 | 就是这一行 | 删掉它（Step 5.4），或给受影响的查询都配 resultMap |
@@ -567,7 +577,7 @@ Step5 复现 NONE 导致属性全 null
 Step4 AS 别名第二种解法跑通
 Step3 建 EmpVo + resultMap + 三处引用，测试绿
 Step2 验"孤儿 SQL"能被字符串调到
-Step1 两个字符串方式测试，看到 Invalid bound statement
+Step1 两个字符串方式测试，看到 Mapped Statements collection does not contain value for（代理方式才报 Invalid bound statement）
 （开工前先复制一份工程到 D:\Java\Projects\backup_20260919\，Git 还没建仓）
 ```
 
