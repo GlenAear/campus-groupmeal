@@ -51,15 +51,23 @@ class EmpDaoTest {
         System.out.println("插入行数=" + rows + "，回填的自增主键 empno=" + emp.getEmpno());
         Assertions.assertEquals(1, rows);
         Assertions.assertNotNull(emp.getEmpno(), "useGeneratedKeys 应该把主键回填进来");
+        // 收尾：自己插的自己删掉。不写这一行，每跑一次 emp 表就多一行"测试员工"（本机实测已经攒了 3 行）
+        Assertions.assertEquals(1, dao.deleteByEmpno(emp.getEmpno()), "收尾删除失败");
     }
 
     @Test
     void 改() {
         Emp emp = dao.queryByEmpno(1);
-        emp.setSalary(emp.getSalary() + 500f);
+        Float origin = emp.getSalary();                 // 先记住原值
+        emp.setSalary(origin + 500f);
         int rows = dao.updateEmp(emp);
         Assertions.assertEquals(1, rows);
         System.out.println("改后：" + dao.queryByEmpno(1));
+        // 收尾：把工资还原。不写这一行，每跑一次 +500，种子数据会被测试吃掉
+        //（本机实测：张三从 8000 被跑到了 9500，正好是跑了 3 次的结果）
+        emp.setSalary(origin);
+        Assertions.assertEquals(1, dao.updateEmp(emp), "还原失败说明 updateEmp 有问题");
+        System.out.println("还原后：" + dao.queryByEmpno(1));
     }
 
     @Test
