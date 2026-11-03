@@ -35,9 +35,18 @@ public class UsersDao {
                 new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
     }
 
-    /** 查全部（第 19 项的主菜，今天先用它做验收） */
+    /** 查全部（第 19 项的主菜，今天先用它做验收）。
+     *  ⚠️ 这个方法把 passwd 列也查出来了，**只用于本地调试/课堂演示**，
+     *     页面上要展示名单请用下面的 selAllNoPwd()。 */
     public List<Map<String, Object>> selAll() throws Exception {
         return Conn.selResult("select uid,username,passwd,email,regDate from users order by uid");
+    }
+
+    /** 给页面用的名单：SQL 里干脆不 select passwd —— 密码不出库、不进页面，
+     *  也就没有"忘了转义就把密码打印在屏幕上"的事故。
+     *  面试就讲这一句：**敏感字段的第一道防线是"不查它"，而不是"查出来再打码"。** */
+    public List<Map<String, Object>> selAllNoPwd() throws Exception {
+        return Conn.selResult("select uid,username,email,regDate from users order by uid");
     }
 
     /** 数一数有几行 */

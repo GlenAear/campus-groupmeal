@@ -38,7 +38,7 @@ public class RegistAdServlet extends HttpServlet {
             }
             System.out.println("===/admin/regist=== " + tip);
             request.setAttribute("tip", tip);
-            request.setAttribute("users", dao.selAll());
+            request.setAttribute("users", dao.selAllNoPwd());   // 名单不含 passwd：密码不该出现在页面上
             request.getRequestDispatcher("/admin/ok.jsp").forward(request, response);
         } catch (Exception e) {
             throw new ServletException("管理员添加用户失败：" + e, e);

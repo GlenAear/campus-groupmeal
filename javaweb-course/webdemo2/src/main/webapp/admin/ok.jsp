@@ -5,7 +5,7 @@
 <head><meta charset="UTF-8"><title>添加结果</title></head>
 <body>
 <h1><%= request.getAttribute("tip") %></h1>
-<h3>users 表全部内容（UsersDao.selAll() → Conn.selResult()）</h3>
+<h3>users 表名单（UsersDao.selAllNoPwd() → Conn.selResult()，<b>SQL 里没查 passwd，所以页面上不会出现密码</b>）</h3>
 <table border="1" cellpadding="6">
 <%
     List<Map<String, Object>> rows = (List<Map<String, Object>>) request.getAttribute("users");
