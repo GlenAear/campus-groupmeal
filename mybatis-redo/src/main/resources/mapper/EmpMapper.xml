@@ -5,6 +5,25 @@
 <!-- ⚠️ namespace 必须是 Dao 接口的完整类名（纪要原话：以实现接口方法的绑定与实现） -->
 <mapper namespace="com.groupmeal.dao.EmpDao">
 
+    <!-- type 这里必须写全类名：com.groupmeal.vo 不在 typeAliases 的扫描包里，拿不到别名 -->
+    <resultMap id="empVoMap" type="com.groupmeal.vo.EmpVo">
+        <!-- 主键用 id，普通列用 result；property=Java属性，column=SQL查出来的列 -->
+        <id property="empNo" column="empno"/>
+        <result property="empName" column="ename"/>
+        <result property="money" column="salary"/>
+        <result property="hDate" column="hiredate"/>
+        <result property="deptNo" column="deptno"/>
+    </resultMap>
+
+    <select id="queryAllVo" resultMap="empVoMap">
+        select empno, ename, salary, deptno, hiredate from emp
+    </select>
+
+    <!-- 接口里没有叫 querySalaryGt 的方法，但 MyBatis 照样注册它 -->
+    <select id="querySalaryGt" resultType="Emp">
+        select empno,ename,salary,deptno,hiredate from emp where salary &gt; #{minSal}
+    </select>
+
     <select id="getCount" resultType="int">
         select count(*) from emp
     </select>
@@ -34,5 +53,6 @@
     <delete id="deleteByEmpno" parameterType="int">
         delete from emp where empno = #{empno}
     </delete>
+
 
 </mapper>

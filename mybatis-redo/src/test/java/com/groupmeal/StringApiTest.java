@@ -31,4 +31,9 @@ class StringApiTest {
         List<Emp> list = session.selectList("com.groupmeal.dao.EmpDao.queryall");
         System.out.println(list);
     }
+    @Test
+    void 调一个接口里没有的SQL(){
+        List<Emp> list = session.selectList("com.groupmeal.dao.EmpDao.querySalaryGt", 5000);
+        list.forEach(System.out::println);
+    }
 }
