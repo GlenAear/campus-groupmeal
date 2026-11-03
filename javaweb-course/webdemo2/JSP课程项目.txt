@@ -1,0 +1,59 @@
+﻿《JSP 网站开发项目化教程》上机任务 24 项 · 进度台账
+================================================================
+
+说明
+----
+· 题目与老师注释照录老师发的进度表原文（那份在你机器上是 GBK 编码，这里转成 UTF-8 放仓库）。
+· "状态"一列**按本目录里实际存在的文件判定**，不按记忆：判定时间 2026-11-04 01:10，
+  依据 = `git ls-files` ＋ `src/main/webapp/` 下的真实文件。
+· 奇/偶 = 按学号末位分侧；本机是偶数侧，标"偶数"的批次老师当堂提问。
+
+第 6 周 · 2026-10-10 上课（标注：奇数）
+--------------------------------------
+1  dl.html ＋ DLServlet                                    // 判断固定用户名、密码是否合法：合法跳所有商品页，不合法跳回登录页
+                                                           状态：未做（webapp 下无 dl.html / DLServlet）
+2  dlrequest.html ＋ DLRequestS                             // 同上，用 request 存变量传用户名
+                                                           状态：未做
+3  dlsession.html ＋ DLSessionServlet ＋ cpsession.jsp       // 用 session 存变量
+                                                           状态：未做
+4  dlcookie.jsp ＋ DLCServlet                               // 用户名存 session，用户名密码存 cookie
+                                                           状态：未做
+
+第 8 周 · 2026-10-21 上课（标注：偶数 → 当堂提问）
+-------------------------------------------------
+5  ex.jsp ＋ top.html                       // <%@ include %> 静态包含举例
+                                           状态：已完成（2026-11-03，commit 50212d5）
+6  applictionjs.jsp                        // application 实现访问计数累计
+                                           状态：已完成（同上；文件名按老师原文拼写，少一个 a，别改）
+7  lt.jsp                                  // 数据库连通测试（本应写在 src 里给多个类用，为测试做成 jsp）
+                                           状态：已完成（同上，读 jdbc.properties 连库并数 users 行数）
+8  jbjava.jsp                              // JavaBean 存一个用户、取用户 —— Java 代码实现
+                                           状态：已完成（同上）
+9  jbtag.jsp                                // 同一件事用 <jsp:useBean>/<jsp:setProperty>/<jsp:getProperty> 实现
+                                           状态：已完成（同上）
+10 lg.html ＋ LoginServlet ＋ show.jsp      // 数据库实现登录验证，跳所有商品页
+                                           状态：已完成（2026-11-03，commit 50212d5）
+
+第 10 周 · 2026-11-04 上课（标注：奇数 → 不提问，本机当天自练）
+--------------------------------------------------------------
+11 Conn.getConn() 直连；Conn.getConnection() 用属性文件存连接参数
+                                           状态：已完成（2026-11-03 写好并实跑；口令一律从 jdbc.properties 取，不写进源码）
+12 Conn.selBoolean() / selResult() / updateData()
+                                           状态：已完成（同上；Conn.java 自带 main() 可不起 Tomcat 自测）
+13 UsersDao 访问 users 表                  状态：已完成（isUser/isAdmin/isExists/add/selAll/selAllNoPwd/count/selUser）
+14 lg.html ＋ LoginServlet 数据库登录验证   状态：已完成
+15 regist.html ＋ RegistServlet 数据库注册   状态：已完成
+16 admin/lg.html ＋ LoginAdServlet；admin/regist.html ＋ RegistAdServlet
+                                           状态：已完成（管理员判定＝用户名必须是 admin 且密码在表里匹配）
+
+第 12 周 · 2026-11-18 上课（标注：偶数 → 当堂提问）
+---------------------------------------------------
+17 admin/index.html 管理员首页菜单                       状态：未做
+18 UsersDao.selUser(String) / selArray(String)          状态：部分（selUser 已写，selArray 待补）
+19 admin/selusers.jsp 查询所有记录 ＋ selAllUser          状态：未做
+20 DelAdServlet 删除用户后跳回 selusers.jsp              状态：未做
+21 show.jsp 普通用户浏览菜品                             状态：已有页面（商品列表是写死的，待接数据库）
+22 updateuser.jsp / UpdateUserAdServlet / selByUName / updateUser   状态：未做
+23 selusers.jsp ＋ seluser.jsp 模糊查询 / selByNameType / selByNT    状态：未做
+   ⚠️ 做这项时的红线：LIKE 写成 `like concat('%',?,'%')`，**不要用字符串拼 "%"+name+"%"**
+24 selpage.jsp 分页显示 ＋ UsersDao.selPage()             状态：未做（MyBatis 侧对应 PageHelper，同一知识点两种写法）

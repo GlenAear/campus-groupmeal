@@ -218,7 +218,23 @@ select * from dept;
 1. **`&` 必须写成 `&amp;`**。XML 里裸写 `&` 会直接报解析错误（`Error parsing SQL Mapper Configuration`）。上面连接串里四个 `&amp;` 就是这么来的。
 2. **标签顺序不能乱**。DTD 规定的顺序是：`properties → settings → typeAliases → typeHandlers → objectFactory → objectWrapperFactory → reflectorFactory → plugins → environments → databaseIdProvider → mappers`。**「纪要」里老师特别强调：分页插件的 `plugins` 要放在 `environments` 前面**（第 05 册会用到），写反了 IDEA 会直接飘红。
 3. **`<mapper resource="mapper/EmpMapper.xml"/>` 现在会飘红**，因为文件还没建 —— **正常，Step 6 建完就消失**，别在这卡住。
-4. **密码不要提交到 Git**。W4 建仓时这个文件要进 `.gitignore`，或改成从 `jdbc.properties` 读（第 05 册做外部化配置时正好解决）。我在 00 索引里已经把它记为建仓前必办事项。
+4. **密码不要提交到 Git** —— ✅ **这条已经做完了（2026-11-04，比原计划提前到 05 册之前）**：上面那段"四个值直接写在 `mybatis-config.xml` 里"是**本册的教学形态**，你工程里现在实际的文件已经不是这样了。现在的样子（文件：`src/main/resources/mybatis-config.xml`，**别照上面那段整份覆盖回去**）：
+
+   ```xml
+   <!-- 最前面多了一段 properties，DTD 要求它必须排在 settings 之前 -->
+   <properties resource="jdbc.properties"/>
+   ...
+   <dataSource type="POOLED">
+       <property name="driver"   value="${driver}"/>
+       <property name="url"      value="${url}"/>
+       <property name="username" value="${user}"/>
+       <property name="password" value="${password}"/>
+   </dataSource>
+   ```
+
+   真实账号密码放在 `src/main/resources/jdbc.properties`（**已被根 `.gitignore` 的 `**/jdbc.properties` 排除，永远不 commit**）；仓库里只提交 `jdbc.properties.example`（占位版）。新机器上手：复制 `.example` → 改名 `jdbc.properties` → 改 `user` / `password` 两行。
+   > 「标注」为什么不能只是"以后再说"：本仓库是 **公开** 的，明文口令一旦进了历史，改提交也抹不掉（`git log -p` 谁都能翻），只能靠**换账号/换密码**让它作废。这条安全意识比"会用 MyBatis"更加分，面试讲工程规范时就说这个。
+   > 「标注」另外两个连带后果：① 你重跑本册时会以为要重写 `mybatis-config.xml`，其实只需确认 `${...}` 四个占位符和 `jdbc.properties` 都在；② 02 册 §0.1 有同样的提醒，做 Step 5 前先看那条。
 
 ### 5.2 三个属性的取值口径（PDF p3–4 ＋ p10，面试会问，读一遍）
 

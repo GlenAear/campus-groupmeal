@@ -26,9 +26,34 @@
 | 改 | `src/main/java/com/groupmeal/dao/EmpDao.java` | 加 3 个方法声明 |
 | 新建 | `src/test/java/com/groupmeal/StringApiTest.java` | Step 1 的对比实验（用完可删） |
 | 新建 | `src/test/java/com/groupmeal/ResultMapTest.java` | Step 3–6 的验收 |
-| 改（临时） | `src/main/resources/mybatis-config.xml` | Step 5 加 `<setting name="autoMappingBehavior" value="NONE"/>` 做实验，**做完必须改回来** |
+| 改（临时） | `src/main/resources/mybatis-config.xml` | Step 5 加 `<setting name="autoMappingBehavior" value="NONE"/>` 做实验，**做完只删这一行**（别整段替换，见 §0.1） |
+| 新建（**不进仓库**） | `src/main/resources/jdbc.properties` | 2026-11-04 起数据库四要素外置到这里：`mybatis-config.xml` 最前面多了 `<properties resource="jdbc.properties"/>`。仓库里只有 `jdbc.properties.example`，本机复制一份填真实账号密码，**这份永远别 commit** |
+| 新建 | `sql/mydb.sql` | 幂等建库脚本：本机 `mydb` 的种子数据从此有了正式出处，换机器（机房／别人 clone）能一键重建 |
 
 > 「标注」`EmpVo` 放在新包 `com.groupmeal.vo` 而不是 `entity`，是有意的：01 册的 `typeAliases` 只扫了 `com.groupmeal.entity`，所以 VO **拿不到别名**，你会被迫写全类名 —— 这正是 Step 3 要顺手讲清的一件事。
+
+### 0.1 `mybatis-config.xml` 现在长什么样（2026-11-04 更新，做 Step 5／6 之前先看一眼）
+
+文件：`src/main/resources/mybatis-config.xml`（**改现有文件，不要整段覆盖**）
+
+```xml
+<configuration>
+
+    <!-- ⓪ 2026-11-04 新增：连接参数外置。DTD 规定 <properties> 必须排在 <settings> 之前，
+         位置写错会直接构建失败（报 "The content of element type 'configuration' must match ..."） -->
+    <properties resource="jdbc.properties"/>
+
+    <settings>
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+        <setting name="mapUnderscoreToCamelCase" value="true"/>   <!-- Step 6 要用的开关，01 册起就一直开着 -->
+    </settings>
+    <!-- 后面 typeAliases / environments / mappers 三段没变 -->
+```
+
+⚠️ 两个坑，本册后面每个贴 `<settings>` 整段的步骤都适用：
+
+1. **只加／只删你说的那一行，不要拿文档里那段整份替换**。你那份 `<settings>` 里还有另一行开关，整段替换会顺手把它删掉；把 `<properties>` 也删了的话，整个工程连不上库，报错长得像 MyBatis 坏了，其实是属性没读到值（`jdbc.properties` 里那四个键是 `driver` / `url` / `user` / `password`）。
+2. 本册所有"临时改动"的还原动作集中在 **§7.1 收尾清理清单**，commit 前照一遍再提交。
 
 ---
 
@@ -294,7 +319,7 @@ PDF p12 用了一整页讲这件事，说明它是**真实项目高频事故点*
 
 ### 5.2 实验 A：全局关掉自动映射，看 resultType 查询变 null
 
-在 `mybatis-config.xml` 的 `<settings>` 里加一行（**加完记得 Step 5.4 删掉**）：
+在 `mybatis-config.xml` 的 `<settings>` 里**只加下面那一行**（不要整段替换——你那 `<settings>` 里还有一行 `mapUnderscoreToCamelCase`，见 §0.1；**加完记得 Step 5.4 删掉**）：
 
 ```xml
 <settings>
@@ -342,9 +367,65 @@ void NONE下resultType查询的属性会是null() {
 </settings>
 ```
 
-打开后，`select empno, ename, salary, hiredate, deptno from emp` 查出的列能自动落到 `empNo / ename / salary / hireDate / deptNo` 上。
+打开后能自动映射上的是**"只差大小写"或"只差下划线"**的列。对照本机 `mydb.emp` 的五个列 ＋ `EmpVo` 的五个属性（`src/main/java/com/groupmeal/vo/EmpVo.java`）：
 
-**动手验**：把 3.2 的 `empVoMap` 那段 resultMap **整段注释掉**（或新写一个 `queryAllVo3` 用 `resultType="com.groupmeal.vo.EmpVo"` ＋ SQL 里 `select empno as emp_no, ename as emp_name, salary as money, hiredate as h_date ...`），打开开关后属性照样有值 —— 你会立刻明白"自动映射"到底在自动什么。
+| SQL 里的列 | EmpVo 的属性 | 开关开着能不能映射上 | 为什么 |
+|---|---|---|---|
+| `empno` | `empNo` | ✅ 能 | 这跟下划线开关**没关系**——自动映射本来就是**大小写不敏感**的（`EMPNO` == `EMPNO`） |
+| `deptno` | `deptNo` | ✅ 能 | 同上 |
+| `ename` | `empName` | ❌ 不能 | 是两个不同的词（少个 p），任何大小写/下划线规则都救不了 |
+| `salary` | `money` | ❌ 不能 | 完全不同的词 |
+| `hiredate` | `hDate` | ❌ 不能 | 同上 |
+
+所以**"打开这个开关，EmpVo 五个属性就都有值"是错的**。这个开关只解决"数据库下划线 ↔ Java 驼峰"，不解决"字段和属性根本是两个名字"。
+
+**动手验（2026-11-04 修订：只做这一种，别走"注释掉 resultMap"那条路）**
+
+先说为什么原来那句"把 `empVoMap` 整段注释掉"是个坑，两个连击：① `<select id="queryAllVo" resultMap="empVoMap">` 还指着它 → 直接 `Could not find result map com.groupmeal.dao.EmpDao.empVoMap`；② 你顺手把 `resultMap=` 换成 `resultType="com.groupmeal.vo.EmpVo"`，SQL 仍是 `select empno, ename, salary, hiredate, deptno` → 结果**只有 `empNo`、`deptNo` 有值**，你会以为开关没生效（看上表就明白：另外三个是不同的词）。
+
+正确做法：只新写一个 `queryAllVo3`，**用 AS 把列名改成"带下划线的属性名"**，让开关去做那最后一步。
+
+文件：`src/main/resources/mapper/EmpMapper.xml`（**改现有文件**，在 `queryAllVo` 那个 select 后面加）
+
+```xml
+<!-- Step 6：列名 → 别名 → 属性名。四个"下划线别名"靠开关还原成驼峰；
+     salary 那一行例外：它和属性 money 之间没有任何规则可推，用的是 §4 的直接别名 -->
+<select id="queryAllVo3" resultType="com.groupmeal.vo.EmpVo">
+    select empno    as emp_no,
+           ename    as emp_name,
+           salary   as money,
+           hiredate as h_date,
+           deptno   as dept_no
+    from emp
+</select>
+```
+
+文件：`src/main/java/com/groupmeal/dao/EmpDao.java`（**改现有**）
+
+```java
+List<EmpVo> queryAllVo3();
+```
+
+文件：`src/test/java/com/groupmeal/ResultMapTest.java`（**改现有**，加一个方法）
+
+```java
+@Test
+void 下划线加开关也能映射对() {
+    List<EmpVo> list = dao.queryAllVo3();
+    list.forEach(System.out::println);
+    EmpVo first = list.get(0);
+    Assertions.assertNotNull(first.getEmpName(), "emp_name 应被开关还原成 empName");
+    Assertions.assertNotNull(first.getMoney(), "money 是直接别名（§4 的招），开关管不到它");
+    Assertions.assertNotNull(first.getHDate(), "h_date 应被开关还原成 hDate");
+    Assertions.assertNotNull(first.getDeptNo(), "dept_no 应被开关还原成 deptNo");
+}
+```
+
+**验收**：`mvn -o -B test` 绿，`queryAllVo3` 打出来的 `EmpVo` 五个属性都有值。
+
+> 「标注」这一节最值钱的一句话：**`emp_no → empNo` 是 `mapUnderscoreToCamelCase` 干的，`salary → money` 是 §4 的 AS 直接起对名字干的**，两件事别混。所以真实项目里字段的"对名"只有两种做法——要么按规范起名（下划线列 ↔ 驼峰属性，交给开关），要么干脆不起对名（写 resultMap）。最忌一半交给开关、一半偷偷 AS 成第三个名字，半年后没人看得懂。
+
+**反向实验（1 分钟，值得做）**：把 `mybatis-config.xml` 里 `mapUnderscoreToCamelCase` 的值改成 `false`，再跑 `下划线加开关也能映射对()` —— `empName / hDate / deptNo / empNo` 全变 null（只剩 `money` 还活着，因为它走的是直接别名），**这就是这个开关到底在干什么的证据**。**验完必须改回 `true`**（§7.1 清单第 2 条）。
 
 > 「标注」为什么这一节 PDF 没讲但你必须会：① Spring Boot 里 `mybatis.configuration.map-underscore-to-camel-case=true` 是**几乎所有教程和脚手架的默认配置**；② 《JSP 网站开发项目化教程》第 5 个项目往后做订餐表（订单号、下单时间）时，你的字段一定是下划线的；③ 你未来 `campus-groupmeal` 的建表规范就按下划线来，Java 侧全驼峰，靠这个开关桥接。
 > 「标注」三种解法的优先级（我给你的定例）：**能用同名最好 → 下划线/驼峰差异用 `mapUnderscoreToCamelCase` → 剩下的真不一致才写 resultMap**。别一上来就给每个查询配 resultMap，那是维护负担。
@@ -400,7 +481,10 @@ XML 里 `#{deptno}` 会去 Map 里取 key="deptno" 的值。适合"参数个数�
 
 **三种怎么选（定例）**：参数是"一个实体的字段"→ 传对象；参数是"几个独立的查询条件"→ @Param；参数"个数不定/来自前端表单"→ Map。
 
-**动手验（10min）**：在 `EmpDao` 加 `queryByDeptAndSalary`（带 @Param）＋对应 XML，测试里调一次 `queryByDeptAndSalary(10, 5000.0)` 打印结果。**再故意把 @Param 删掉跑一次**，亲眼看到上面那个 `Available parameters are [arg1, arg0...]` 报错——看过一次就永远记得。
+**动手验（10min）**：在 `EmpDao`（文件 `src/main/java/com/groupmeal/dao/EmpDao.java`）加 `queryByDeptAndSalary`（带 @Param）＋对应 XML（文件 `src/main/resources/mapper/EmpMapper.xml`），测试里调一次 `queryByDeptAndSalary(1, 5000.0)` 打印结果。
+
+> ⚠️ **参数不要照抄 `(10, 5000.0)`**：本机 `emp` 表的 `deptno` 只有 1／2／3，用 `10` 查出来是**空列表——这是正常现象，不是报错**，白琢磨半天不值得。要用 `1`（张三、李四 都在 1 部门，salary 分别 9500 和 9500.5，都 > 5000，能出 2 行）。
+> ⚠️ **再故意把 @Param 删掉跑一次**，亲眼看到上面那个 `Available parameters are [arg1, arg0...]` —— **看完必须把 @Param 加回来**，别把炸的版本 commit 进仓库。想把这次"看见报错"永久留在测试里，就照 `StringApiTest.字符串方式故意写错一次()` 的做法用 `Assertions.assertThrows(...)` 固化成断言：演示价值保留，`mvn test` 还是绿的。
 
 ---
 
@@ -411,6 +495,20 @@ XML 里 `#{deptno}` 会去 Map 里取 key="deptno" 的值。适合"参数个数�
 3. `resultType` 和 `resultMap` 二选一；字段不一致时用 AS（轻）或 resultMap（可复用、能做嵌套）。
 4. `autoMappingBehavior` 是全局开关（默认 PARTIAL），设 `NONE` 会把所有 `resultType` 查询打成空属性对象 —— **不要动它**；单个 resultMap 可用 `autoMapping` 覆盖。
 5. 真实项目靠 `mapUnderscoreToCamelCase=true` 桥接"数据库下划线 / Java 驼峰"，而不是给每个查询写 resultMap。
+
+---
+
+## 7.1 本册收尾清理清单（commit 前照一遍，五条都过了才进 03 册）
+
+| # | 动作 | 具体位置 | 不做会怎样 |
+|---|---|---|---|
+| 1 | **删掉** `<setting name="autoMappingBehavior" value="NONE"/>` 这一整行 | `src/main/resources/mybatis-config.xml` 的 `<settings>`（§5.2 加进去的） | 03、04 册所有 `resultType` 查询属性一片 null，你会误判成动态 SQL／关联映射的坑 |
+| 2 | **确认** `<setting name="mapUnderscoreToCamelCase" value="true"/>` 还在、值还是 `true` | 同上 | Step 6 的 `queryAllVo3` 变成全 null，你会以为 AS 别名失效了 |
+| 3 | **确认** `<properties resource="jdbc.properties"/>` 还在且排在 `<settings>` **之前**；本机 `src/main/resources/jdbc.properties` 存在（从 `.example` 复制来填真值） | 同上 ＋ `src/main/resources/` | 轻则整个工程连不上库；重则你把真实账号密码提交进**公开仓库**（这份文件已在 `.gitignore` 的 `**/jdbc.properties` 里，`git status` 不该出现它） |
+| 4 | Step 6.5 里为做实验删掉的 `@Param` **加回来** | `src/main/java/com/groupmeal/dao/EmpDao.java` | `queryByDeptAndSalary` 一调就炸，而你会以为是 03 册引入的问题 |
+| 5 | `mvn -o -B test` → **`Failures: 0, Errors: 0` ＋ BUILD SUCCESS** | 工程根目录（`mvn` 不在 PATH，用 `D:\Java\Maven\apache-maven-3.9.0\bin\mvn -o -B test`） | 带着红测试进 03 册，以后分不清是旧账还是新坑 |
+
+> 「标注」第 5 条为什么今天特别提：`StringApiTest.字符串方式故意写错一次()` 以前是**故意让它炸**的（每次 `mvn test` 都以 ERROR 收场），2026-11-04 已改成 `Assertions.assertThrows(...)` —— 异常照样发生、照样打印给你看，但断言把它"接住"了，所以是绿的。以后所有"演示错误"的实验都用这个套路：**红测试的唯一价值是让真问题被看见，别拿它当备忘录。**
 
 ---
 
@@ -481,3 +579,4 @@ Step1 两个字符串方式测试，看到 Invalid bound statement
 ---
 
 *生成 2026-09-18 20:35 ｜ 上一册：01 环境与第一个 CRUD ｜ 下一册：03 动态 SQL 全标签（`<if>/<where>/<set>/<foreach>/<trim>`，实体类必须用包装类那笔账在这册结清）*
+
