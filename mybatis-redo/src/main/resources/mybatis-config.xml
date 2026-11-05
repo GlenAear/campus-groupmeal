@@ -12,8 +12,17 @@
     <!-- ① 全局设置：打开 SQL 日志（PDF p5「日志配置」）＋ 下划线转驼峰 -->
     <settings>
         <setting name="logImpl" value="STDOUT_LOGGING"/>
-        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <setting name="mapUnderscoreToCamelCase" value="true"/>  <!-- 下划线自动转驼峰：只管 emp_no 到 empNo 这种 -->
     </settings>
+
+    <!-- 【02 册 §5.2 实验 A 的做法】上面两行是常态配置，别动。要做"关掉自动映射会怎样"的实验时，
+         临时在 settings 里加下面这两行，看完结果就把它们删掉（留在文件里会连带炸掉其它 resultType 查询）：
+             <setting name="autoMappingBehavior" value="NONE"/>
+             <setting name="returnInstanceForEmptyRow" value="true"/>
+         只加第一行：resultType 查询整行返回 null（foundValues=false 且该开关默认 false）。
+         两行都加：对象还在、属性全 null —— 这才是文档 §5.2 写的"属性全 null"那个现象。
+         对应测试方法 ResultMapTest.NONE下resultType查询的属性会是null() 里已写了同样的提醒。 -->
+
 
     <!-- ② 类型别名：扫整个包，之后映射文件里可直接写 Emp 而不必写全类名（纪要「配置别名简化」） -->
     <typeAliases>

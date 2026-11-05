@@ -19,6 +19,29 @@
         select empno, ename, salary, deptno, hiredate from emp
     </select>
 
+    <!-- §4 的路子：不写 resultMap，改用 AS 把列**直接起成属性名**，靠自动映射按名字对上（大小写不敏感）。
+         和下面 queryAllVo3 的区别：这里别名已经是驼峰 empNo/empName，开关帮不上忙也不碍事；
+         queryAllVo3 的别名是下划线 emp_no，必须靠 mapUnderscoreToCamelCase=true 才认得。 -->
+    <select id="queryAllVo2" resultType="com.groupmeal.vo.EmpVo">
+        select empno    as empNo,
+               ename    as empName,
+               salary   as money,
+               deptno   as deptNo,
+               hiredate as hDate
+        from emp
+    </select>
+
+    <!-- Step 6：列名 → 下划线别名 → 靠 mapUnderscoreToCamelCase 开关还原成驼峰属性；
+         salary→money 是例外，它和属性没有任何规则可推，用的是直接别名（§4 的招） -->
+    <select id="queryAllVo3" resultType="com.groupmeal.vo.EmpVo">
+        select empno    as emp_no,
+               ename    as emp_name,
+               salary   as money,
+               hiredate as h_date,
+               deptno   as dept_no
+        from emp
+    </select>
+
     <!-- 接口里没有叫 querySalaryGt 的方法，但 MyBatis 照样注册它 -->
     <select id="querySalaryGt" resultType="Emp">
         select empno,ename,salary,deptno,hiredate from emp where salary &gt; #{minSal}
